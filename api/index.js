@@ -5,7 +5,10 @@ import { v2 as cloudinary } from "cloudinary";
 import dotenv from "dotenv";
 import streamifier from "streamifier";
 
-dotenv.config({ path: ".env.local" });
+if (process.env.NODE_ENV !== 'production') {
+  dotenv.config();
+}
+// ----------------------
 
 const app = express();
 app.use(cors());
