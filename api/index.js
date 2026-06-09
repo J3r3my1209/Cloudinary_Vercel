@@ -5,18 +5,24 @@ import { v2 as cloudinary } from "cloudinary";
 import dotenv from "dotenv";
 import streamifier from "streamifier";
 
+// Carga .env solo en desarrollo local
 if (process.env.NODE_ENV !== 'production') {
   dotenv.config();
 }
-// ----------------------
 
 const app = express();
 app.use(cors());
 app.use(express.json());
 
-const storage = multer.memoryStorage();
+// Configuración de Cloudinary usando variables de entorno
+cloudinary.config({
+  cloud_name: process.env.CLOUDINARY_CLOUD_NAME,
+  api_key: process.env.CLOUDINARY_API_KEY,
+  api_secret: process.env.CLOUDINARY_API_SECRET
+});
+
 const upload = multer({
-  storage,
+  storage: multer.memoryStorage(),
   limits: { fileSize: 5 * 1024 * 1024 },
   fileFilter: (req, file, cb) => {
     if (!file.mimetype.startsWith("image/")) {
@@ -24,16 +30,6 @@ const upload = multer({
     }
     cb(null, true);
   }
-});
-
-cloudinary.config({
-  cloud_name: process.env.CLOUDINARY_CLOUD_NAME,
-  api_key: process.env.CLOUDINARY_API_KEY,
-  api_secret: process.env.CLOUDINARY_API_SECRET
-});
-
-app.get("/api/health", (req, res) => {
-  res.json({ ok: true, message: "Backend funcionando" });
 });
 
 app.post("/api/upload", upload.single("imagen"), async (req, res) => {
@@ -55,11 +51,10 @@ app.post("/api/upload", upload.single("imagen"), async (req, res) => {
 
     res.json({
       message: "Imagen subida correctamente",
-      public_id: result.public_id,
       url: result.secure_url
     });
   } catch (error) {
-    console.error(error);
+    console.error("Error en Cloudinary:", error);
     res.status(500).json({ error: "Error al subir la imagen" });
   }
 });
